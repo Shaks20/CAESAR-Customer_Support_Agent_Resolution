@@ -1,0 +1,44 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: support_agent
+      POSTGRES_USER: support_agent
+      POSTGRES_PASSWORD: support_agent
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U support_agent -d support_agent"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://support_agent:support_agent@db:5432/support_agent
+      APP_ENV: development
+      DEMO_REVIEWER_TOKEN: ${DEMO_REVIEWER_TOKEN:-local-reviewer-token-change-me}
+      RATE_LIMIT_REQUESTS: ${RATE_LIMIT_REQUESTS:-60}
+      RATE_LIMIT_WINDOW_SECONDS: ${RATE_LIMIT_WINDOW_SECONDS:-60}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      MOCK_SHIPPING_FAIL: ${MOCK_SHIPPING_FAIL:-0}
+      MOCK_SHIPPING_DELAY_MS: ${MOCK_SHIPPING_DELAY_MS:-0}
+      MOCK_TICKETING_FAIL: ${MOCK_TICKETING_FAIL:-0}
+      MOCK_TICKETING_DELAY_MS: ${MOCK_TICKETING_DELAY_MS:-0}
+      MOCK_TICKETING_TIMEOUT_AFTER_ACCEPT: ${MOCK_TICKETING_TIMEOUT_AFTER_ACCEPT:-0}
+      MOCK_PAYMENT_FAIL: ${MOCK_PAYMENT_FAIL:-0}
+      MOCK_PAYMENT_DELAY_MS: ${MOCK_PAYMENT_DELAY_MS:-0}
+      MOCK_PAYMENT_TIMEOUT_AFTER_ACCEPT: ${MOCK_PAYMENT_TIMEOUT_AFTER_ACCEPT:-0}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["sh", "-c", "alembic upgrade head && python -m app.db.seed && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+
+volumes:
+  postgres_data:

@@ -56,24 +56,25 @@ flowchart TD
 
 ## Quick start (local Python)
 
-Python 3.11+ is recommended.
+Python 3.11+ is recommended. Dependencies are declared in `pyproject.toml`; install the project and development tools from the repository root.
 
-```bash
-python -m venv .venv
-# Windows PowerShell:
-.venv\\Scripts\\Activate.ps1
-# macOS/Linux:
-# source .venv/bin/activate
-pip install -r requirements.txt
-copy .env.example .env  # Windows; on macOS/Linux use: cp .env.example .env
-alembic upgrade head
+```powershell
+# Windows PowerShell
+py -3.11 -m venv .venv
+.\\.venv\\Scripts\\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev]"
+Copy-Item .env.example .env
+python -m alembic upgrade head
 python -m app.db.seed
-uvicorn app.main:app --reload
+python -m uvicorn app.main:app --reload
 ```
 
-Open [http://127.0.0.1:8000](http://127.0.0.1:8000). API docs are at `/docs`.
+For macOS/Linux, activate with `source .venv/bin/activate` and copy settings with `cp .env.example .env`; the remaining `python -m ...` commands are the same.
 
-The local default database is SQLite for zero-friction setup. Importing `app.main` does not create schema or touch the database; run the seed command before starting the server. To use PostgreSQL, set `DATABASE_URL` to a PostgreSQL SQLAlchemy URL and install `psycopg[binary]` (included in `requirements.txt`).
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000). API docs are at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs), and the health endpoint is [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health).
+
+The local default database is SQLite for zero-friction setup. Importing `app.main` does not create schema or touch the database; run the migration and seed commands before starting the server. No Gemini API key is required for the first run: the classifier falls back to deterministic rules. For a beginner-friendly setup and code walkthrough, see [First Run and Code Tour](docs/FIRST_RUN_AND_CODE_TOUR.md). To use PostgreSQL, set `DATABASE_URL` to a PostgreSQL SQLAlchemy URL; `psycopg[binary]` is included in the project dependencies.
 
 ## Docker Compose
 
